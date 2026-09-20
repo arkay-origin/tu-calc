@@ -8,7 +8,7 @@ A calculator for the Ascension system in **Tiny Universe** (Android). Enter your
 
 **Live tool:** https://arkay-origin.github.io/tu-calc/
 
-Created by **Arkay**, using data from **Emperor** and **Bolt**. If you find this tool helpful, please consider giving fame to **Arkay** or **ExoticWratchX20** (Bolt).
+Created by **Arkay**, using data from **Emperor**, **Da6Gaming** and **Bolt**. If you find this tool helpful, please consider giving fame to **Arkay** or **ExoticWratchX20** (Bolt). Not Da6Gaming though. He has enough.
 
 ## How the numbers work
 
@@ -33,6 +33,12 @@ This is a fan-made tool, not affiliated with the Tiny Universe developer. The nu
 Everything runs in your browser. Your inputs are saved only on your device (browser local storage) and are never sent anywhere.
 
 ## Changelog
+
+### v1.0.2
+- Credit line: Da6Gaming added as a contributor to the formula data.
+
+### v1.0.1
+- Credit line tweak: fame request now mentions Da6Gaming.
 
 ### v1.0.0
 - First release: bank and lifetime requirements up to A200, readiness check from your current level, level-by-level table, and editable formula settings.
