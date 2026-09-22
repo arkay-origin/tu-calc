@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<!-- Tiny Universe Ascension Planner v1.1.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="Plan Tiny Universe ascensions: dev-published costs to max every upgrade, the lifetime totals needed to unlock each level, and a suggested jump.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ascension Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Deliberately single-theme: a night-sky console to match the game. */
+  :root{
+    --ground:#0a0c19; --panel:#12152c; --panel-2:#171b38; --line:#272c55;
+    --text:#e7e8f6; --muted:#9296bd; --faint:#5f6391;
+    --echo:#5fd6e8; --bbp:#c79cf2; --shard:#f3c66c;
+    --ok:#6fdc9a; --warn:#f08a7a; --focus:#8fb4ff;
+    --display:"Chakra Petch", "Segoe UI", system-ui, sans-serif;
+    --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+    color-scheme:dark;
+  }
+  html,body{background:var(--ground);color:var(--text)}
+  body{font:14px/1.45 var(--body);
+    background:
+      radial-gradient(1000px 420px at 85% -10%, #1d1a4a 0%, transparent 60%),
+      radial-gradient(800px 360px at -10% 10%, #0f2a3a 0%, transparent 55%),
+      var(--ground);
+    background-attachment:fixed;}
+  .wrap{max-width:820px;margin:0 auto;padding:18px 16px 36px;display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+  .wrap > *{min-width:0}
+
+  /* Header + credit */
+  header{display:grid;gap:6px}
+  .title-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+  header h1{font:700 clamp(24px,5vw,32px)/1.05 var(--display);letter-spacing:.02em;margin:0}
+  .game{font:600 11px/1 var(--display);letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .credit{display:inline-block;justify-self:start;
+    padding:6px 12px;border-radius:999px;font:500 13px var(--display);letter-spacing:.03em;color:var(--muted);
+    background:linear-gradient(90deg,color-mix(in srgb,var(--echo) 12%,transparent),color-mix(in srgb,var(--bbp) 12%,transparent),color-mix(in srgb,var(--shard) 12%,transparent));
+    border:1px solid var(--line)}
+  .credit b{font-weight:700;color:var(--text)}
+  .credit .star{color:var(--shard)}
+  .credit{border-radius:12px;padding:8px 12px}
+  .credit .fame{display:block;margin-top:3px;font:400 12px/1.4 var(--body);letter-spacing:0;color:var(--muted)}
+  .credit .fame b{font-weight:600;color:var(--shard)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .panel h2{font:600 11px/1 var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+
+  label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.02em}
+  input,select{width:100%;box-sizing:border-box;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:7px 10px;font:600 14px var(--mono);font-variant-numeric:tabular-nums}
+  select{font:13px var(--body)}
+  input:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  input::placeholder{color:var(--faint);font-weight:400}
+  .hint{font-size:12px;color:var(--faint)}
+
+  /* Plan panel: levels + results together */
+  .plan-top{display:flex;flex-wrap:wrap;align-items:end;gap:10px 14px}
+  .levels{display:flex;align-items:end;gap:8px}
+  .levels .lvl{width:92px}
+  .levels input{font:700 20px var(--display);padding:4px 10px;text-align:center}
+  .arrow{font:600 18px/1 var(--display);color:var(--faint);padding-bottom:9px}
+  .plan-sum{flex:1 1 220px;display:grid;gap:2px;padding-bottom:2px}
+  .plan-sum .big{font:700 17px var(--display)}
+  .chip{display:inline-flex;align-items:center;font:600 11px var(--display);letter-spacing:.06em;text-transform:uppercase;
+    padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .chip.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent)}
+  .chip.no{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+
+  .ledger{margin-top:12px;display:grid;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .lrow{display:grid;grid-template-columns:minmax(64px,.7fr) minmax(0,1.6fr) minmax(0,1.3fr);gap:4px 12px;align-items:center;
+    padding:8px 12px;background:var(--panel-2);border-left:3px solid var(--c)}
+  .lrow + .lrow{border-top:1px solid var(--line)}
+  .lrow .name{font:600 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+  .lrow .val{font:600 18px var(--mono);font-variant-numeric:tabular-nums}
+  .lrow .val small{font:400 11px var(--mono);color:var(--muted);margin-left:6px}
+  .lrow .meta{font-size:12px;color:var(--muted);display:grid;gap:1px;text-align:right}
+  .lrow .meta b{font:600 12px var(--mono);color:var(--text)}
+  .lrow .ok b,.lrow .ok{color:var(--ok)} .lrow .no b{color:var(--warn)}
+  .echo{--c:var(--echo)} .bbp{--c:var(--bbp)} .shard{--c:var(--shard)}
+
+  /* Your amounts */
+  .amounts{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 10px;align-items:center}
+  .amounts .h{font:600 10px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .amounts .n{font:600 12px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--c)}
+  .reach{display:grid;gap:8px;margin-top:10px;font-size:13px;color:var(--muted)}
+  .reach b{font:700 15px var(--display);color:var(--text)}
+  .reach b.ok{color:var(--ok)} .reach b.no{color:var(--warn)}
+  .rnote{font-size:12px;color:var(--muted);margin-top:1px}
+  .rnote em{font-style:normal;font-family:var(--mono);color:var(--text)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* Table + settings */
+  details summary{cursor:pointer;font:600 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"+ ";color:var(--faint)}
+  details[open] summary::before{content:"– "}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+  table{border-collapse:collapse;width:100%;min-width:600px;font:12px var(--mono);font-variant-numeric:tabular-nums}
+  th,td{padding:5px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+  th{font:600 10px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--panel-2)}
+  th.grp{text-align:center;color:var(--faint)}
+  td:first-child,th:first-child{text-align:left;font-family:var(--display);font-weight:600}
+  tr.target td{background:color-mix(in srgb,var(--echo) 9%,transparent)}
+  tr:last-child td{border-bottom:0}
+  td.e{color:var(--echo)} td.b{color:var(--bbp)} td.s{color:var(--shard)}
+  td.sep,th.sep{border-left:1px solid var(--line)}
+
+  .settings{display:grid;gap:10px;margin-top:10px}
+  .set-row{display:grid;grid-template-columns:120px repeat(3,minmax(0,1fr));gap:8px;align-items:end}
+  .set-row .rl{font-size:12px;color:var(--muted);padding-bottom:9px}
+  button{background:transparent;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 12px;font:600 12px var(--display);letter-spacing:.06em;cursor:pointer;justify-self:start}
+  button:hover{border-color:var(--muted)}
+  .note{font-size:12px;color:var(--muted);max-width:72ch;margin:0}
+  .note code{font-family:var(--mono);color:var(--text);font-size:11px}
+
+  @media (max-width:560px){
+    .lrow{grid-template-columns:minmax(0,1fr) auto}
+    .lrow .name{grid-column:1/-1}
+    .lrow .val{font-size:17px}
+    .set-row{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .set-row .rl{grid-column:1/-1;padding:0}
+  }
+</style>
+<style>*{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="game">Tiny Universe · Ascension</div>
+    <h1>Ascension Planner</h1>
+    <div class="credit"><span class="star" aria-hidden="true">✦</span> Created by <b>Arkay</b>, using data from <b>Emperor</b>, <b>Da6Gaming</b> and <b>Bolt</b>
+      <span class="fame">If you find this tool helpful, please consider giving fame to <b>Arkay</b> or <b>ExoticWratchX20</b> (Bolt). Not Da6Gaming though. He has enough.</span></div>
+  </header>
+
+  <section class="panel" aria-live="polite">
+    <div class="plan-top">
+      <div class="levels">
+        <div class="lvl"><label for="cur">Current</label><input id="cur" type="number" min="0" max="200" step="1" inputmode="numeric" value="4"></div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="lvl"><label for="tgt">Target</label><input id="tgt" type="number" min="1" max="200" step="1" inputmode="numeric" value="8"></div>
+      </div>
+      <div class="plan-sum">
+        <div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center">
+          <span class="big" id="resTitle">Bank before ascending to A8</span>
+          <span class="chip" id="overall">Add your amounts to check</span>
+        </div>
+        <div class="hint" id="lvlHint">Only the target's bank matters, because upgrades reset every ascension.</div>
+      </div>
+    </div>
+    <div class="ledger" id="cards"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Your amounts <span style="color:var(--faint);letter-spacing:.06em">· optional</span></h2>
+    <div class="amounts">
+      <span></span><span class="h">Banked now</span><span class="h">Lifetime earned</span>
+      <span class="n echo">Echoes</span>
+      <span><label class="sr" for="bankE">Echoes banked</label><input id="bankE" inputmode="decimal" placeholder="62k"></span>
+      <span><label class="sr" for="lifeE">Echoes lifetime</label><input id="lifeE" inputmode="decimal" placeholder="150k"></span>
+      <span class="n bbp">BBP</span>
+      <span><label class="sr" for="bankB">BBP banked</label><input id="bankB" inputmode="decimal" placeholder="9.7k"></span>
+      <span><label class="sr" for="lifeB">BBP lifetime</label><input id="lifeB" inputmode="decimal" placeholder="15k"></span>
+      <span class="n shard">Shards</span>
+      <span><label class="sr" for="bankS">Shards banked</label><input id="bankS" inputmode="decimal" placeholder="1.2k"></span>
+      <span><label class="sr" for="lifeS">Shards lifetime</label><input id="lifeS" inputmode="decimal" placeholder="1.5k"></span>
+    </div>
+    <div class="reach">
+      <div><span class="rk">Ready to ascend to</span> <b id="reachBank">—</b><div class="rnote" id="reachBankNote"></div></div>
+      <div><span class="rk">Lifetime allows up to</span> <b id="reachLife">—</b><div class="rnote" id="reachLifeNote"></div></div>
+      <div><span class="rk">Suggested jump</span> <b id="jump">—</b><div class="rnote" id="jumpNote"></div></div>
+    </div>
+    <div class="hint" style="margin-top:6px">Shorthand works: 62k, 1.5m, 2.3b. Saved in this browser only.</div>
+  </section>
+
+  <section class="panel">
+    <details id="tblDetails" open>
+      <summary id="tblTitle">Level by level</summary>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th rowspan="2">Level</th><th class="grp sep" colspan="3">Lifetime to ascend</th><th class="grp sep" colspan="3">Bank to max</th></tr>
+            <tr><th class="sep">Echoes</th><th>BBP</th><th>Shards</th><th class="sep">Echoes</th><th>BBP</th><th>Shards</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <details id="setDetails">
+      <summary>Data &amp; formula settings</summary>
+      <div class="settings">
+        <p class="note">Bank costs for A1–A110 are the dev's published figures, used exactly as given. Above A110 they're estimated with <code>cost = factor × (growth<sup>n</sup> − 1)</code>, which matches the published table to within 0.03% from A20 up. Lifetime requirements use <code>base × (growth<sup>n</sup> − 1) ÷ (growth − 1)</code> and match the requirement chart exactly.</p>
+        <div class="set-row"><div class="rl">Bank costs</div>
+          <div style="grid-column:span 3"><label for="source">Source</label>
+            <select id="source">
+              <option value="official">Dev data A1–A110, estimated above</option>
+              <option value="formula">Formula estimate at every level</option>
+            </select></div></div>
+        <div class="set-row"><div class="rl">Cost factor</div>
+          <div><label for="faE">Echoes</label><input id="faE" inputmode="numeric"></div>
+          <div><label for="faB">BBP</label><input id="faB" inputmode="numeric"></div>
+          <div><label for="faS">Shards</label><input id="faS" inputmode="numeric"></div></div>
+        <div class="set-row"><div class="rl">Lifetime base (A1)</div>
+          <div><label for="lbE">Echoes</label><input id="lbE" inputmode="numeric"></div>
+          <div><label for="lbB">BBP</label><input id="lbB" inputmode="numeric"></div>
+          <div><label for="lbS">Shards</label><input id="lbS" inputmode="numeric"></div></div>
+        <div class="set-row"><div class="rl">Growth</div>
+          <div><label for="growth">Per level</label><input id="growth" inputmode="decimal"></div></div>
+        <button id="reset" type="button">Reset to dev data</button>
+        <p class="note">If the dev rebalances Ascension, switch to the formula estimate and edit the factors, or send me the new table. A1–A6 sit slightly above the formula because the game rounds each upgrade individually, which is why the published figures are used instead of calculated ones.</p>
+      </div>
+    </details>
+  </section>
+
+  <footer class="hint" style="text-align:center">Ascension Planner v1.1.0 · Bank costs published by the dev · Fan-made tool, not affiliated with the Tiny Universe developer.</footer>
+</div>
+
+<script>
+(function(){
+  const MAX = 200;
+  // Bank costs to max every upgrade, A1-A110, published by the Tiny Universe dev.
+  // One row per ascension: Echoes, BBP, Shards.
+  const OFFICIAL = `10144 1577 190
+21352 3311 360
+33583 5209 587
+47054 7294 803
+61889 9597 1029
+78219 12125 1315
+96162 14905 1603
+115867 17964 1935
+137561 21328 2295
+161444 25030 2671
+187716 29105 3130
+216561 33585 3598
+248344 38512 4132
+283308 43929 4676
+321743 49895 5327
+364006 56447 6012
+410551 63666 6805
+461633 71594 7639
+517985 80329 8557
+579943 89932 9596
+647930 100484 10688
+722866 112110 11951
+805354 124894 13315
+895975 138949 14793
+995703 154413 16449
+1105385 171424 18246
+1226028 190135 20238
+1358682 210718 22425
+1504753 233361 24851
+1665341 258264 27485
+1842000 285662 30394
+2036321 315794 33606
+2250078 348949 37150
+2485197 385410 41015
+2743760 425517 45281
+3028347 469640 49970
+3341229 518169 55112
+3685463 571556 60790
+4064110 630281 67066
+4480650 694880 73943
+4938883 765940 81491
+5442856 844100 89812
+5997165 930072 98953
+6607080 1024654 109019
+7277914 1128693 120084
+8015796 1243128 132253
+8827532 1369007 145624
+9720397 1507484 160366
+10702515 1659794 176563
+11782890 1827348 194387
+12971298 2011648 214005
+14278589 2214381 235565
+15716576 2437392 259281
+17298297 2682698 285379
+19038236 2952540 314089
+20952224 3249362 345657
+23057490 3575860 380387
+25373407 3935023 418591
+27920815 4330085 460586
+30723010 4764666 506833
+33805457 5242706 557691
+37196144 5768548 613607
+40925893 6346974 675155
+45028569 6983236 742815
+49541523 7683133 817277
+54505818 8453010 899143
+59966537 9299883 989241
+65973271 10231439 1088340
+72580697 11256152 1197343
+79848931 12383335 1317229
+87843848 13623235 1449108
+96638406 14987133 1594182
+106312377 16487416 1753789
+116953741 18137726 1929326
+128659184 19953071 2122424
+141535169 21949939 2334828
+155698879 24146505 2568459
+171278896 26562728 2825485
+188416825 29220568 3108195
+207268558 32144184 3419158
+228005540 35360175 3761263
+250816290 38897768 4137558
+275907980 42789112 4551465
+303508983 47069595 5006795
+333869996 51778122 5507631
+367267100 56957505 6058568
+404003970 62654826 6664590
+444414443 68921875 7331210
+488865916 75815630 8064477
+537762715 83398765 8871087
+591549038 91740206 9758360
+650714120 100915800 10734383
+715795661 111008951 11807985
+787385343 122111413 12988926
+866133930 134324123 14288001
+952757465 147758105 15716969
+1048043320 162535487 17288825
+1152857765 178790603 19017884
+1268153677 196671234 20919837
+1394979144 216339926 23011959
+1534487191 237975485 25313338
+1687945931 261774602 27844840
+1856750734 287953633 30629470
+2042435914 316750562 33692584
+2246689619 348427190 37062008
+2471368689 383271478 40768374
+2718515657 421600191 44845384
+2990377417 463761783 49330098
+3289425219 510139527 54263276
+3618377793 561155048 59689765`.trim().split("\n").map(l=>l.trim().split(/\s+/).map(Number));
+  const LAST = OFFICIAL.length;                       // 110
+  const DEF = {fa:[101235,15700,1670], lb:[10000,1000,100], growth:1.1, source:"official"};
+  const KEY = "tu-ascension-planner-v2";
+  const $ = id => document.getElementById(id);
+  const CUR = [{name:"Echoes",cls:"echo"},{name:"BBP",cls:"bbp"},{name:"Shards",cls:"shard"}];
+
+  function parseAmt(s){
+    if(s==null) return null;
+    s=String(s).trim().toLowerCase().replace(/[, _]/g,"");
+    if(!s) return null;
+    const m=s.match(/^(\d*\.?\d+)([kmbt]?)$/);
+    if(!m) return NaN;
+    const mult={"":1,k:1e3,m:1e6,b:1e9,t:1e12}[m[2]];
+    return Math.round(parseFloat(m[1])*mult*10)/10;
+  }
+  const fmt = n => (Math.round(n*10)/10).toLocaleString("en-CA",{maximumFractionDigits:1});
+  function short(n){
+    const u=[[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]];
+    for(const [v,s] of u) if(n>=v) return (n/v).toFixed(n/v>=100?0:n/v>=10?1:2).replace(/\.0+$/,"")+s;
+    return String(n);
+  }
+
+  function settings(){
+    const g=parseFloat($("growth").value);
+    const read=(id,d)=>{const v=parseAmt($(id).value);return (v&&v>0)?v:d;};
+    return {
+      fa:[read("faE",DEF.fa[0]),read("faB",DEF.fa[1]),read("faS",DEF.fa[2])],
+      lb:[read("lbE",DEF.lb[0]),read("lbB",DEF.lb[1]),read("lbS",DEF.lb[2])],
+      growth:(g>0&&g<3)?g:DEF.growth,
+      source:$("source").value
+    };
+  }
+
+  function build(st){
+    const bank=[[],[],[]], life=[[],[],[]], g=st.growth;
+    for(let c=0;c<3;c++){
+      const est=n=>Math.round(st.fa[c]*(Math.pow(g,n)-1));
+      if(st.source==="official"){
+        for(let n=1;n<=LAST;n++) bank[c][n]=OFFICIAL[n-1][c];
+        for(let n=LAST+1;n<=MAX;n++) bank[c][n]=est(n);
+      } else {
+        for(let n=1;n<=MAX;n++) bank[c][n]=est(n);
+      }
+      bank[c][0]=bank[c][1];
+      // Lifetime: A0 = 0, An = base x (g^n - 1)/(g - 1), rounded once (matches the requirement chart)
+      const L=st.lb[c];
+      life[c][0]=0;
+      for(let n=1;n<=MAX;n++) life[c][n]=Math.round(L*(Math.pow(g,n)-1)/(g-1));
+    }
+    return {bank,life};
+  }
+
+  // Suggested jump. Income per ascension rises by a flat amount, so later ranks add
+  // proportionally less while costs keep climbing ~10% a level. Passive core adds +0.06
+  // per rank for Echoes and BBP, +0.025 for Shards; Global adds +0.01 for all three.
+  const GAIN=[0.06,0.06,0.025];
+  function income(c,r){ return (1+GAIN[c]*r)*(1+0.01*r); }
+  function suggestJump(T,cur){
+    const hi=Math.min(MAX,cur+60);
+    if(hi<=cur) return null;
+    // Segment time, in units of the time it takes to earn the current level's costs.
+    const segment=(from,to)=>{
+      let worst=0;
+      for(let c=0;c<3;c++) worst=Math.max(worst, T.bank[c][to]/T.bank[c][cur||1]/income(c,from));
+      return worst;
+    };
+    const time=[], prev=[];
+    for(let n=cur+1;n<=hi;n++){
+      time[n]=Infinity;
+      for(let m=cur;m<n;m++){
+        const t=(m===cur?0:time[m])+segment(m,n);
+        if(t<time[n]){ time[n]=t; prev[n]=m; }
+      }
+    }
+    const path=[hi];
+    while(path[0]>cur && prev[path[0]]!==cur) path.unshift(prev[path[0]]);
+    return path;
+  }
+
+  function clampLvl(v,lo){ v=parseInt(v,10); if(isNaN(v)) return lo; return Math.min(MAX,Math.max(lo,v)); }
+
+  function render(){
+    const st=settings(), T=build(st);
+    const cur=clampLvl($("cur").value,0);
+    const tgt=clampLvl($("tgt").value,1);
+    const bankH=["bankE","bankB","bankS"].map(id=>parseAmt($(id).value));
+    const lifeH=["lifeE","lifeB","lifeS"].map(id=>parseAmt($(id).value));
+
+    $("resTitle").textContent = `Bank before ascending to A${tgt}`;
+    $("lvlHint").textContent = tgt<=cur
+      ? `Target should be above your current level (A${cur}). Showing A${tgt} as entered.`
+      : `${tgt-cur} ascension${tgt-cur===1?"":"s"} in a row. Only the A${tgt} bank matters, because upgrades reset every time.`;
+
+    let allOk=true, anyEntered=false;
+    $("cards").innerHTML = CUR.map((c,i)=>{
+      const need=T.bank[i][tgt], lneed=T.life[i][tgt];
+      const have=bankH[i], lhave=lifeH[i];
+      let bankLine="", lifeLine=`<span>Unlock: <b>${fmt(lneed)}</b> lifetime</span>`;
+      if(have!=null && !isNaN(have)){
+        anyEntered=true;
+        const d=need-have; if(d>0) allOk=false;
+        bankLine = d>0 ? `<span class="no">Short <b>${fmt(d)}</b></span>` : `<span class="ok">Banked ✓ <b>+${fmt(-d)}</b></span>`;
+      } else allOk=false;
+      if(lhave!=null && !isNaN(lhave)){
+        anyEntered=true;
+        const d=lneed-lhave; if(d>0) allOk=false;
+        lifeLine = d>0 ? `<span class="no">Lifetime short <b>${fmt(d)}</b></span>` : `<span class="ok">Lifetime ✓ <b>${fmt(lneed)}</b></span>`;
+      }
+      return `<div class="lrow ${c.cls}">
+        <div class="name">${c.name}</div>
+        <div class="val">${fmt(need)}<small>≈${short(need)}</small></div>
+        <div class="meta">${bankLine}${lifeLine}</div></div>`;
+    }).join("");
+
+    const chip=$("overall");
+    if(!anyEntered){ chip.className="chip"; chip.textContent="Add your amounts to check"; }
+    else if(allOk){ chip.className="chip ok"; chip.textContent=`Ready for A${tgt}`; }
+    else { chip.className="chip no"; chip.textContent="Not ready yet"; }
+
+    // Measured from the current level: only levels above it count.
+    const NAMES=["Echoes","BBP","Shards"];
+    const filled=vals=>vals.every(v=>v!=null&&!isNaN(v));
+    const covers=(vals,tab,n)=>tab.every((t,i)=>vals[i]>=t[n]);
+    const shortList=(vals,tab,n)=>tab.map((t,i)=>t[n]-vals[i]>0?`${NAMES[i]} short <em>${fmt(t[n]-vals[i])}</em>`:null).filter(Boolean).join(", ");
+    const setReach=(id,text,cls,note)=>{ const el=$(id); el.textContent=text; el.className=cls||""; $(id+"Note").innerHTML=note||""; };
+    const lifeOk=filled(lifeH), bankOk=filled(bankH);
+
+    // Lifetime: highest level above current that lifetime totals unlock.
+    let rl=null;
+    if(!lifeOk) setReach("reachLife","—","", "Fill in all 3 lifetime totals.");
+    else {
+      rl=cur;
+      for(let n=cur+1;n<=MAX;n++){ if(covers(lifeH,T.life,n)) rl=n; else break; }
+      const nx=rl+1;
+      if(rl===cur) setReach("reachLife","no further ascension yet","no",`For A${nx}: ${shortList(lifeH,T.life,nx)} lifetime.`);
+      else setReach("reachLife",`A${rl}`,"ok", nx<=MAX?`For A${nx}: ${shortList(lifeH,T.life,nx)} lifetime.`:"");
+    }
+
+    // Ready: bank can re-max everything there, and lifetime (if entered) allows it.
+    if(!bankOk) setReach("reachBank","—","", "Fill in all 3 banked amounts.");
+    else {
+      let rb=cur;
+      for(let n=cur+1;n<=MAX;n++){
+        if(covers(bankH,T.bank,n) && (!lifeOk || covers(lifeH,T.life,n))) rb=n; else break;
+      }
+      const nx=rb+1;
+      const bankGap=shortList(bankH,T.bank,nx);
+      const lifeBlock = lifeOk && !covers(lifeH,T.life,nx) ? `lifetime doesn't unlock A${nx} yet` : "";
+      const why=[bankGap?`bank ${bankGap}`:"",lifeBlock].filter(Boolean).join("; ");
+      if(rb===cur) setReach("reachBank","none yet","no",`For A${nx}: ${why}.`);
+      else setReach("reachBank",`A${rb}`,"ok", nx<=MAX?`Next, A${nx}: ${why}.${lifeOk?"":" (Lifetime not entered.)"}`:"");
+    }
+
+    // Suggested jump
+    const path=suggestJump(T,cur);
+    const jn=$("jumpNote");
+    if(!path || !path.length){ $("jump").textContent="—"; $("jump").className=""; jn.textContent="Already at the top of the table."; }
+    else {
+      const first=path[0], second=path[1];
+      $("jump").textContent = second ? `A${first}, then about A${second}` : `A${first}`;
+      $("jump").className="";
+      jn.innerHTML = `Fastest route from A${cur} on Ascension bonuses alone. Best guess: Paradox Fragment builds, Premium upgrades and other boosts also affect this and aren't accounted for.`;
+    }
+
+    let from=Math.min(cur+1,tgt), to=tgt;
+    if(to-from>59) from=to-59;
+    $("tblTitle").textContent = `Level by level · A${from}–A${to}`;
+    let html="";
+    for(let n=from;n<=to;n++){
+      html+=`<tr class="${n===tgt?"target":""}"><td>A${n}</td>
+        <td class="e sep">${fmt(T.life[0][n])}</td><td class="b">${fmt(T.life[1][n])}</td><td class="s">${fmt(T.life[2][n])}</td>
+        <td class="e sep">${fmt(T.bank[0][n])}</td><td class="b">${fmt(T.bank[1][n])}</td><td class="s">${fmt(T.bank[2][n])}</td></tr>`;
+    }
+    $("rows").innerHTML=html;
+    save();
+  }
+
+  const FIELDS=["cur","tgt","bankE","bankB","bankS","lifeE","lifeB","lifeS","faE","faB","faS","lbE","lbB","lbS","growth","source"];
+  function save(){ try{ const o={}; FIELDS.forEach(f=>o[f]=$(f).value); localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
+  function fillDefaults(){
+    ["faE","faB","faS"].forEach((id,i)=>$(id).value=DEF.fa[i]);
+    ["lbE","lbB","lbS"].forEach((id,i)=>$(id).value=DEF.lb[i]);
+    $("growth").value=DEF.growth; $("source").value=DEF.source;
+  }
+  fillDefaults();
+  try{ const o=JSON.parse(localStorage.getItem(KEY)||"null"); if(o) FIELDS.forEach(f=>{ if(o[f]!=null && o[f]!=="") $(f).value=o[f]; }); }catch(e){}
+
+  FIELDS.forEach(f=>$(f).addEventListener("input",render));
+  $("source").addEventListener("change",render);
+  $("reset").addEventListener("click",()=>{ fillDefaults(); render(); });
+  render();
+})();
+</script>
+
+</body>
+</html>
