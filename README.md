@@ -5,7 +5,6 @@ A calculator for the Ascension system in **Tiny Universe** (Android). Enter your
 - how many **Echoes**, **Big Bang Points (BBP)** and **Shards** to bank before ascending, so you can max Collapse, Big Bang and Rupture right away
 - the **lifetime** totals needed to unlock each level
 - which level you're **ready to ascend to** based on your banked and lifetime amounts
-- a **suggested jump**: how far to ascend in one go
 
 **Live tool:** https://arkay-origin.github.io/tu-calc/
 
@@ -23,7 +22,7 @@ with factors of 101,235 (Echoes), 15,700 (BBP) and 1,670 (Shards). That formula 
 
 **Lifetime requirements** use the same shape, starting from 10,000 Echoes / 1,000 BBP / 100 Shards at A1, and match the community requirement chart exactly.
 
-**Suggested jump** is based on the Ascension bonuses only: Global +1% per rank, passive core +0.06 per rank for Echoes and BBP and +0.025 for Shards. Since each rank adds a flat amount while costs keep climbing about 10% a level, long jumps generally beat ascending one level at a time. It's a best guess. Paradox Fragment builds, Premium upgrades and other boosts aren't accounted for.
+**Ascending several levels at once** is more efficient than one level at a time, because upgrades reset each ascension and only the level you stop at costs you anything. How far to jump depends on your Paradox Fragment build, Premium upgrades and other boosts, so the tool doesn't try to pick a number for you.
 
 Everything above can be changed under **Data & formula settings** if the game is rebalanced.
 
@@ -34,6 +33,9 @@ This is a fan-made tool, not affiliated with the Tiny Universe developer.
 Everything runs in your browser. Your inputs are saved only on your device (browser local storage) and are never sent anywhere.
 
 ## Changelog
+
+### v1.2.0
+- Removed the suggested-jump estimate. Too many other bonuses affect the answer for a model based on Ascension bonuses alone to be reliable. Replaced with a short note on why multiple ascensions at once are worth doing.
 
 ### v1.1.0
 - Bank costs now use the developer's published figures for A1-A110, replacing the community estimate. Shard costs drop about 13%; Echoes and BBP by under 1%.

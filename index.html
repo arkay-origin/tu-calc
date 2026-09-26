@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- Tiny Universe Ascension Planner v1.1.0 -->
+<!-- Tiny Universe Ascension Planner v1.2.0 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="description" content="Plan Tiny Universe ascensions: dev-published costs to max every upgrade, the lifetime totals needed to unlock each level, and a suggested jump.">
+<meta name="description" content="Plan Tiny Universe ascensions: dev-published costs to max every upgrade and the lifetime totals needed to unlock each level.">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ascension Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,6 +91,7 @@
   .reach b.ok{color:var(--ok)} .reach b.no{color:var(--warn)}
   .rnote{font-size:12px;color:var(--muted);margin-top:1px}
   .rnote em{font-style:normal;font-family:var(--mono);color:var(--text)}
+  .tip{font-size:12px;line-height:1.45;color:var(--muted);border-left:2px solid var(--shard);padding-left:10px}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
   /* Table + settings */
@@ -172,7 +173,7 @@
     <div class="reach">
       <div><span class="rk">Ready to ascend to</span> <b id="reachBank">—</b><div class="rnote" id="reachBankNote"></div></div>
       <div><span class="rk">Lifetime allows up to</span> <b id="reachLife">—</b><div class="rnote" id="reachLifeNote"></div></div>
-      <div><span class="rk">Suggested jump</span> <b id="jump">—</b><div class="rnote" id="jumpNote"></div></div>
+      <div class="tip">Ascending several levels at once is more efficient than one level at a time: upgrades reset each ascension, so only the level you stop at costs you anything.</div>
     </div>
     <div class="hint" style="margin-top:6px">Shorthand works: 62k, 1.5m, 2.3b. Saved in this browser only.</div>
   </section>
@@ -219,7 +220,7 @@
     </details>
   </section>
 
-  <footer class="hint" style="text-align:center">Ascension Planner v1.1.0 · Bank costs published by the dev · Fan-made tool, not affiliated with the Tiny Universe developer.</footer>
+  <footer class="hint" style="text-align:center">Ascension Planner v1.2.0 · Bank costs published by the dev · Fan-made tool, not affiliated with the Tiny Universe developer.</footer>
 </div>
 
 <script>
@@ -389,33 +390,6 @@
     return {bank,life};
   }
 
-  // Suggested jump. Income per ascension rises by a flat amount, so later ranks add
-  // proportionally less while costs keep climbing ~10% a level. Passive core adds +0.06
-  // per rank for Echoes and BBP, +0.025 for Shards; Global adds +0.01 for all three.
-  const GAIN=[0.06,0.06,0.025];
-  function income(c,r){ return (1+GAIN[c]*r)*(1+0.01*r); }
-  function suggestJump(T,cur){
-    const hi=Math.min(MAX,cur+60);
-    if(hi<=cur) return null;
-    // Segment time, in units of the time it takes to earn the current level's costs.
-    const segment=(from,to)=>{
-      let worst=0;
-      for(let c=0;c<3;c++) worst=Math.max(worst, T.bank[c][to]/T.bank[c][cur||1]/income(c,from));
-      return worst;
-    };
-    const time=[], prev=[];
-    for(let n=cur+1;n<=hi;n++){
-      time[n]=Infinity;
-      for(let m=cur;m<n;m++){
-        const t=(m===cur?0:time[m])+segment(m,n);
-        if(t<time[n]){ time[n]=t; prev[n]=m; }
-      }
-    }
-    const path=[hi];
-    while(path[0]>cur && prev[path[0]]!==cur) path.unshift(prev[path[0]]);
-    return path;
-  }
-
   function clampLvl(v,lo){ v=parseInt(v,10); if(isNaN(v)) return lo; return Math.min(MAX,Math.max(lo,v)); }
 
   function render(){
@@ -488,17 +462,6 @@
       const why=[bankGap?`bank ${bankGap}`:"",lifeBlock].filter(Boolean).join("; ");
       if(rb===cur) setReach("reachBank","none yet","no",`For A${nx}: ${why}.`);
       else setReach("reachBank",`A${rb}`,"ok", nx<=MAX?`Next, A${nx}: ${why}.${lifeOk?"":" (Lifetime not entered.)"}`:"");
-    }
-
-    // Suggested jump
-    const path=suggestJump(T,cur);
-    const jn=$("jumpNote");
-    if(!path || !path.length){ $("jump").textContent="—"; $("jump").className=""; jn.textContent="Already at the top of the table."; }
-    else {
-      const first=path[0], second=path[1];
-      $("jump").textContent = second ? `A${first}, then about A${second}` : `A${first}`;
-      $("jump").className="";
-      jn.innerHTML = `Fastest route from A${cur} on Ascension bonuses alone. Best guess: Paradox Fragment builds, Premium upgrades and other boosts also affect this and aren't accounted for.`;
     }
 
     let from=Math.min(cur+1,tgt), to=tgt;
